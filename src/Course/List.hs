@@ -343,9 +343,12 @@ produce f n = n :. produce f (f n)
 notReverse ::
   List a
   -> List a
+notReverse = reverse
+{-
 notReverse Nil = Nil
 notReverse (x :. xs) =
   x :. (notReverse . reverse) xs
+-}
 
 largeList ::
   List Int
