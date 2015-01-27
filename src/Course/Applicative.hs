@@ -10,6 +10,7 @@ module Course.Applicative(
 , filtering
 , return
 , fail
+--, tstg
 ) where
 
 import Course.Core
@@ -38,8 +39,8 @@ class Apply f => Applicative f where
   (a -> b)
   -> f a
   -> f b
-(<$>) =
-  error "todo"
+--(<$>) f fa = f <$> fa 
+(<$>) f fa = pure f <*> fa 
 
 -- | Insert into Id.
 --
@@ -48,8 +49,7 @@ instance Applicative Id where
   pure ::
     a
     -> Id a
-  pure =
-    error "todo"
+  pure x = Id x
 
 -- | Insert into a List.
 --
@@ -58,8 +58,7 @@ instance Applicative List where
   pure ::
     a
     -> List a
-  pure =
-    error "todo"
+  pure x = x :. Nil
 
 -- | Insert into an Optional.
 --
@@ -68,8 +67,7 @@ instance Applicative Optional where
   pure ::
     a
     -> Optional a
-  pure =
-    error "todo"
+  pure x = Full x
 
 -- | Insert into a constant function.
 --
@@ -78,8 +76,7 @@ instance Applicative ((->) t) where
   pure ::
     a
     -> ((->) t a)
-  pure =
-    error "todo"
+  pure x = const x
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -101,8 +98,7 @@ sequence ::
   Applicative f =>
   List (f a)
   -> f (List a)
-sequence =
-  error "todo"
+sequence = foldRight  (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -125,8 +121,7 @@ replicateA ::
   Int
   -> f a
   -> f (List a)
-replicateA =
-  error "todo"
+replicateA n fa = sequence $ replicate n fa
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -153,8 +148,14 @@ filtering ::
   (a -> f Bool)
   -> List a
   -> f (List a)
-filtering =
-  error "todo"
+filtering p = foldRight g (pure Nil)  
+  where
+    g x fxs =
+      (\b xs -> if b then (x :. xs) else xs)
+      <$> (p x) <*> fxs
+
+tstg :: Applicative f => (a -> f Bool) -> a -> f (List a) -> f (List a)
+tstg p x fxs = (\b xs -> if b then (x :. xs) else xs) <$> (p x) <*> fxs
 
 -----------------------
 -- SUPPORT LIBRARIES --
