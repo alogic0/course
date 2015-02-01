@@ -41,8 +41,8 @@ instance Functor (State s) where
     (a -> b)
     -> State s a
     -> State s b
-  (<$>) =
-      error "todo"
+  (<$>) f st =
+      State $ \s -> let (a1, s1) = runState st s in (f a1, s1)
 
 -- | Implement the `Apply` instance for `State s`.
 -- >>> runState (pure (+1) <*> pure 0) 0
@@ -56,8 +56,8 @@ instance Apply (State s) where
     State s (a -> b)
     -> State s a
     -> State s b 
-  (<*>) =
-    error "todo"
+  (<*>) stf sta =
+    State $ \s -> let (f, s1) = runState stf s in runState (f <$> sta) s1 
 
 -- | Implement the `Applicative` instance for `State s`.
 -- >>> runState (pure 2) 0
@@ -66,8 +66,7 @@ instance Applicative (State s) where
   pure ::
     a
     -> State s a
-  pure =
-    error "todo"
+  pure a = State $ \s -> (a, s)
 
 -- | Implement the `Bind` instance for `State s`.
 -- >>> runState ((const $ put 2) =<< put 1) 0
@@ -77,8 +76,9 @@ instance Bind (State s) where
     (a -> State s b)
     -> State s a
     -> State s b
-  (=<<) =
-    error "todo"
+  (=<<) f sta =
+    State $ \s -> let (a1, s1) = runState sta s
+		  in runState (f a1) s1
 
 instance Monad (State s) where
 
@@ -89,8 +89,7 @@ exec ::
   State s a
   -> s
   -> s
-exec =
-  error "todo"
+exec st = snd . runState st
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 --
@@ -99,8 +98,7 @@ eval ::
   State s a
   -> s
   -> a
-eval =
-  error "todo"
+eval st = fst . runState st
 
 -- | A `State` where the state also distributes into the produced value.
 --
@@ -108,8 +106,7 @@ eval =
 -- (0,0)
 get ::
   State s s
-get =
-  error "todo"
+get = State $ \s -> (s, s)
 
 -- | A `State` where the resulting state is seeded with the given value.
 --
@@ -118,8 +115,7 @@ get =
 put ::
   s
   -> State s ()
-put =
-  error "todo"
+put x = State $ \_ -> ((), x) 
 
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.

@@ -63,7 +63,7 @@ infixr 1 =<<
   f (a -> b)
   -> f a
   -> f b
-(<*>) ff fa = (\g -> g <$> fa) =<< ff
+(<*>) fg fa = (\g -> g <$> fa) =<< fg
 
 infixl 4 <*>
 
@@ -129,7 +129,7 @@ join ::
   Bind f =>
   f (f a)
   -> f a
-join  = (id =<<)
+join = (id =<<)
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
