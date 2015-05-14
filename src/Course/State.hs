@@ -136,8 +136,13 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM =
-  error "todo"
+findM p xs =
+    case xs of
+      Nil -> return Empty
+      (x :. xs') -> do b <- p x
+                       if b
+                       then return (Full x)
+                       else findM p xs'
 
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
@@ -150,8 +155,11 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo"
+firstRepeat xs =
+  let p x = do s <- get
+               put $ S.insert x s
+               return (S.member x s) 
+  in fst $ runState (findM p xs) S.empty
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
@@ -163,8 +171,11 @@ distinct ::
   Ord a =>
   List a
   -> List a
-distinct =
-  error "todo"
+distinct xs =
+  let p x = do s <- get
+               put $ S.insert x s
+               return (S.notMember x s) 
+  in fst $ runState (filtering p xs) S.empty
 
 -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
@@ -190,5 +201,16 @@ distinct =
 isHappy ::
   Integer
   -> Bool
-isHappy =
-  error "todo"
+isHappy num =
+    contains 1 $ firstRepeat $ happyList num
+
+-- for playing with
+square :: forall a. Num a => a -> a
+square x = x * x
+
+happySum :: forall a. Show a => a -> Int
+happySum n = sum $ map (square . digitToInt) $ show' n
+
+happyList :: forall a. Show a => a -> List Int
+happyList n = produce happySum (happySum n)
+
