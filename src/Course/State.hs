@@ -214,3 +214,9 @@ happySum n = sum $ map (square . digitToInt) $ show' n
 happyList :: forall a. Show a => a -> List Int
 happyList n = produce happySum (happySum n)
 
+sortL :: Ord t => List t -> List t
+sortL Nil = Nil
+sortL (x :. xs) = sortL (filter (< x) xs) ++ (x :. Nil) ++ sortL (filter (x <=) xs)
+
+happyDistinct :: List Integer -> List (List Char)
+happyDistinct xs = distinct $  map (sortL . filter (/= '0') . show') $ filter isHappy xs
