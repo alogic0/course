@@ -41,8 +41,8 @@ instance Functor f => Functor (StateT s f) where
     (a -> b)
     -> StateT s f a
     -> StateT s f b
-  (<$>) =
-    error "todo"
+  (<$>) fun st =
+    StateT $ \s -> (\(x, y) -> (fun x, y)) <$> runStateT st s
 
 -- | Implement the `Apply` instance for @StateT s f@ given a @Bind f@.
 --
@@ -60,8 +60,9 @@ instance Bind f => Apply (StateT s f) where
     StateT s f (a -> b)
     -> StateT s f a
     -> StateT s f b
-  (<*>) =
-    error "todo"
+  (<*>) stf sta =
+    StateT $ \s -> runStateT stf s >>=    -- f (g, s1)
+        \(g, s1) -> runStateT (g <$> sta) s1
 
 -- | Implement the `Applicative` instance for @StateT s f@ given a @Applicative f@.
 --
@@ -74,8 +75,8 @@ instance Monad f => Applicative (StateT s f) where
   pure ::
     a
     -> StateT s f a
-  pure =
-    error "todo"
+  pure x =
+    StateT $ \s -> return (x, s)
 
 -- | Implement the `Bind` instance for @StateT s f@ given a @Monad f@.
 -- Make sure the state value is passed through in `bind`.
@@ -87,8 +88,9 @@ instance Monad f => Bind (StateT s f) where
     (a -> StateT s f b)
     -> StateT s f a
     -> StateT s f b
-  (=<<) =
-    error "todo"
+  (=<<) fa st =
+    StateT $ \s -> runStateT st s >>=  -- f (a, s1)
+        \(a, s1) -> runStateT (fa a) s1
 
 instance Monad f => Monad (StateT s f) where
 
@@ -103,8 +105,8 @@ type State' s a =
 state' ::
   (s -> (a, s))
   -> State' s a
-state' =
-  error "todo"
+state' f =
+  StateT (Id . f)
 
 -- | Provide an unwrapper for `State'` values.
 --
@@ -114,8 +116,7 @@ runState' ::
   State' s a
   -> s
   -> (a, s)
-runState' =
-  error "todo"
+runState' s =  runId . runStateT s
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting state.
 execT ::
@@ -123,16 +124,14 @@ execT ::
   StateT s f a
   -> s
   -> f s
-execT =
-  error "todo"
+execT sta s = snd <$> runStateT sta s
 
 -- | Run the `State` seeded with `s` and retrieve the resulting state.
 exec' ::
   State' s a
   -> s
   -> s
-exec' =
-  error "todo"
+exec' st = snd . runState' st 
 
 -- | Run the `StateT` seeded with `s` and retrieve the resulting value.
 evalT ::
@@ -140,16 +139,14 @@ evalT ::
   StateT s f a
   -> s
   -> f a
-evalT =
-  error "todo"
+evalT sta s = fst <$> runStateT sta s
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 eval' ::
   State' s a
   -> s
   -> a
-eval' =
-  error "todo"
+eval' st = fst . runState' st
 
 -- | A `StateT` where the state also distributes into the produced value.
 --
@@ -158,8 +155,7 @@ eval' =
 getT ::
   Monad f =>
   StateT s f s
-getT =
-  error "todo"
+getT = StateT $ \s -> return (s, s)
 
 -- | A `StateT` where the resulting state is seeded with the given value.
 --
@@ -172,8 +168,7 @@ putT ::
   Monad f =>
   s
   -> StateT s f ()
-putT =
-  error "todo"
+putT s = StateT $ \_ -> return ((), s)
 
 -- | Remove all duplicate elements in a `List`.
 --
@@ -184,7 +179,7 @@ distinct' ::
   (Ord a, Num a) =>
   List a
   -> List a
-distinct' =
+distinct' xs =
   error "todo"
 
 -- | Remove all duplicate elements in a `List`.
